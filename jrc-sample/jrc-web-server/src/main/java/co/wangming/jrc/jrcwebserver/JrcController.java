@@ -21,8 +21,8 @@ public class JrcController {
 
 	private static final Logger logger = LoggerFactory.getLogger(JrcController.class);
 
-	@PostMapping(value = "/decompile")
-	public Result decompiler(@RequestParam("file") MultipartFile file) {
+	@PostMapping(value = "/uploadClassFile")
+	public Result uploadClassFile(@RequestParam("file") MultipartFile file) {
 		logger.info("decompile");
         try {
             byte[] bytes = IOUtils.toByteArray(file.getInputStream());
@@ -33,8 +33,8 @@ public class JrcController {
         }
 	}
 
-	@PostMapping(value = "/compileFile")
-	public Result compileFile(@RequestParam("file") MultipartFile file) {
+	@PostMapping(value = "/uploadJavaFile")
+	public Result uploadJavaFile(@RequestParam("file") MultipartFile file) {
         try {
             String javasource = IOUtils.toString(file.getInputStream(), "UTF8");
             logger.info("compileFile : {}", javasource);
@@ -45,8 +45,8 @@ public class JrcController {
         }
 	}
 
-	@PostMapping(value = "/compileSource")
-    public Result compileSource(@RequestParam("javasource") String javasource) {
+	@PostMapping(value = "/uploadJavaSource")
+    public Result uploadJavaSource(@RequestParam("javasource") String javasource) {
         logger.info("compileSource:{}", javasource);
         try {
             return JrcExecutor.INSTANCE.compile(javasource);
@@ -56,8 +56,8 @@ public class JrcController {
         }
 	}
 
-	@PostMapping(value = "/appendClassPath")
-	public Result appendClassPath(@RequestParam("file") MultipartFile file) {
+	@PostMapping(value = "/uploadJarFile")
+	public Result uploadJarFile(@RequestParam("file") MultipartFile file) {
 
         try {
             byte[] bytes = IOUtils.toByteArray(file.getInputStream());
@@ -70,8 +70,8 @@ public class JrcController {
 
 	}
 
-	@PostMapping(value = "/execute")
-	public Result queryKeys(@RequestParam("key") String key, @RequestParam("method") String method) {
+	@PostMapping(value = "/executeMethod")
+	public Result executeMethod(@RequestParam("key") String key, @RequestParam("method") String method) {
 		logger.info("execute {} - {}", key, method);
         try {
             return JrcExecutor.INSTANCE.exec(key, method);
