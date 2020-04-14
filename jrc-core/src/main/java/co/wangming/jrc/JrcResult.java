@@ -7,7 +7,7 @@ import java.io.Serializable;
  * <p>
  * Created by congfei on 2017/8/25.
  */
-public class Result<T> implements Serializable {
+public class JrcResult<T> implements Serializable {
 
     private Integer code;
 
@@ -41,30 +41,30 @@ public class Result<T> implements Serializable {
 
     @Override
     public String toString() {
-        return "Result{" +
+        return "JrcResult{" +
                 "code=" + code +
                 ", msg='" + msg + '\'' +
                 ", data=" + data +
                 '}';
     }
 
-    public static Result success() {
+    public static JrcResult success() {
         return success(null);
     }
 
-    public static <R> Result success(R msg) {
-        Result result = new Result();
-        result.setCode(1);
-        result.setMsg("成功");
-        result.setData(msg);
-        return result;
+    public static <R> JrcResult success(R msg) {
+        JrcResult jrcResult = new JrcResult();
+        jrcResult.setCode(1);
+        jrcResult.setMsg("成功");
+        jrcResult.setData(msg);
+        return jrcResult;
     }
 
-    public static Result error(String msg) {
-        Result result = new Result();
-        result.setCode(2);
-        result.setMsg(msg);
-        return result;
+    public static JrcResult error(String msg) {
+        JrcResult jrcResult = new JrcResult();
+        jrcResult.setCode(2);
+        jrcResult.setMsg(msg);
+        return jrcResult;
     }
 
 }

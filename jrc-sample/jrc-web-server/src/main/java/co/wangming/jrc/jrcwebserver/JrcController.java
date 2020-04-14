@@ -1,6 +1,6 @@
 package co.wangming.jrc.jrcwebserver;
 
-import co.wangming.jrc.Result;
+import co.wangming.jrc.JrcResult;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,62 +22,62 @@ public class JrcController {
 	private static final Logger logger = LoggerFactory.getLogger(JrcController.class);
 
 	@PostMapping(value = "/uploadClassFile")
-	public Result uploadClassFile(@RequestParam("file") MultipartFile file) {
+	public JrcResult uploadClassFile(@RequestParam("file") MultipartFile file) {
 		logger.info("decompile");
         try {
             byte[] bytes = IOUtils.toByteArray(file.getInputStream());
-            return JrcExecutor.INSTANCE.decompile(bytes);
+            return JrcContext.INSTANCE.decompile(bytes);
         } catch (Exception e) {
             logger.info("decompile", e);
-            return Result.error(e.getMessage());
+            return JrcResult.error(e.getMessage());
         }
 	}
 
 	@PostMapping(value = "/uploadJavaFile")
-	public Result uploadJavaFile(@RequestParam("file") MultipartFile file) {
+	public JrcResult uploadJavaFile(@RequestParam("file") MultipartFile file) {
         try {
             String javasource = IOUtils.toString(file.getInputStream(), "UTF8");
             logger.info("compileFile : {}", javasource);
-            return JrcExecutor.INSTANCE.compile(javasource);
+            return JrcContext.INSTANCE.compile(javasource);
         } catch (Exception e) {
             logger.info("compileFile", e);
-            return Result.error(e.getMessage());
+            return JrcResult.error(e.getMessage());
         }
 	}
 
 	@PostMapping(value = "/uploadJavaSource")
-    public Result uploadJavaSource(@RequestParam("javasource") String javasource) {
+    public JrcResult uploadJavaSource(@RequestParam("javasource") String javasource) {
         logger.info("compileSource:{}", javasource);
         try {
-            return JrcExecutor.INSTANCE.compile(javasource);
+            return JrcContext.INSTANCE.compile(javasource);
         } catch (Exception e) {
             logger.info("compileSource", e);
-            return Result.error(e.getMessage());
+            return JrcResult.error(e.getMessage());
         }
 	}
 
 	@PostMapping(value = "/uploadJarFile")
-	public Result uploadJarFile(@RequestParam("file") MultipartFile file) {
+	public JrcResult uploadJarFile(@RequestParam("file") MultipartFile file) {
 
         try {
             byte[] bytes = IOUtils.toByteArray(file.getInputStream());
             logger.info("appendClassPath");
-            return JrcExecutor.INSTANCE.appendClassPath(bytes);
+            return JrcContext.INSTANCE.appendClassPath(bytes);
         } catch (IOException e) {
             logger.info("appendClassPath", e);
-            return Result.error(e.getMessage());
+            return JrcResult.error(e.getMessage());
         }
 
 	}
 
 	@PostMapping(value = "/executeMethod")
-	public Result executeMethod(@RequestParam("key") String key, @RequestParam("method") String method) {
+	public JrcResult executeMethod(@RequestParam("key") String key, @RequestParam("method") String method) {
 		logger.info("execute {} - {}", key, method);
         try {
-            return JrcExecutor.INSTANCE.exec(key, method);
+            return JrcContext.INSTANCE.exec(key, method);
         } catch (Exception e) {
             logger.info("exec", e);
-            return Result.error(e.getMessage());
+            return JrcResult.error(e.getMessage());
         }
 	}
 }

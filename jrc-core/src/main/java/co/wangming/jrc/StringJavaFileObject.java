@@ -6,12 +6,12 @@ import java.net.URI;
 /**
  * 用于将java源码保存在content属性中
  */
-public class StringJavaFileObject extends SimpleJavaFileObject {
+public class StringJavaFileObject<T> extends SimpleJavaFileObject {
 
     /**
      * 保存java code
      */
-    private String content;
+    private T content;
 
 
     /**
@@ -20,7 +20,7 @@ public class StringJavaFileObject extends SimpleJavaFileObject {
      * @param className
      * @param content
      */
-    public StringJavaFileObject(String className, String content) {
+    public StringJavaFileObject(String className, T content) {
         super(URI.create("string:///" + className.replace('.', '/')
                 + Kind.SOURCE.extension), Kind.SOURCE);
         this.content = content;
@@ -34,6 +34,6 @@ public class StringJavaFileObject extends SimpleJavaFileObject {
      */
     @Override
     public String getCharContent(boolean ignoreEncodingErrors) {
-        return content;
+        return content.toString();
     }
 }

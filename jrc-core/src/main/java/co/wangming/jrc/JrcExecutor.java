@@ -1,6 +1,8 @@
 package co.wangming.jrc;
 
 
+import co.wangming.jrc.manager.JavaFileManagerFactory;
+import co.wangming.jrc.manager.JrcJavaFileManager;
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.PackageDeclaration;
@@ -30,9 +32,9 @@ import java.util.stream.Stream;
 /**
  * Created By WangMing On 2019/1/17
  **/
-public class JrcContext {
+public class JrcExecutor {
 
-    private static final Logger logger = LoggerFactory.getLogger(JrcContext.class);
+    private static final Logger logger = LoggerFactory.getLogger(JrcExecutor.class);
 
     private final Map<String, byte[]> classBytesCache = new ConcurrentHashMap<>();
 
@@ -55,13 +57,13 @@ public class JrcContext {
 
     }
 
-    public Result appendClassPath(byte[] bytes) {
+    public JrcResult appendClassPath(byte[] bytes) {
 
         try {
             File pathDir = new File("./lib");
             if (!pathDir.exists()) {
                 if (!pathDir.mkdirs()) {
-                    return Result.error("创建'./lib'失败");
+                    return JrcResult.error("创建'./lib'失败");
                 }
 
             }
@@ -76,17 +78,17 @@ public class JrcContext {
             appendClassPath(libFile.getCanonicalPath());
             addRuntimeClassPath(libFile.getCanonicalPath());
 
-            return Result.success(getAllCallpath());
+            return JrcResult.success(getAllCallpath());
         } catch (Exception e) {
             logger.error("", e);
-            return Result.error(e.getMessage());
+            return JrcResult.error(e.getMessage());
         }
     }
 
     private void appendClassPath(String cp) {
         classpath += File.pathSeparator + cp;
 
-        logger.info("添加classpath: {}, {}", cp, File.pathSeparator);
+//        logger.info("添加classpath: {}, {}", cp, File.pathSeparator);
     }
 
     private void addRuntimeClassPath(String jar) throws Exception {
@@ -108,20 +110,16 @@ public class JrcContext {
     /***************************************************************************************************
      ***************************************   编译(Java编译成Class)      *******************************
      ***************************************************************************************************/
-    public Result compile(String javaCode) throws Exception {
-        ClassInfo classInfo = getClassFileFromJavaSource(javaCode);
+    public JrcResult compile(String javaCode) throws Exception {
 
-        //获取系统编译器
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-        // 建立DiagnosticCollector对象
         DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
 
-        // 建立用于保存被编译文件名的对象
-        // 每个文件被保存在一个从JavaFileObject继承的类中
-        JavaFileCacheManager fileManager = new JavaFileCacheManager(compiler.getStandardFileManager(diagnostics, null, null));
+        JrcJavaFileManager fileManager = JavaFileManagerFactory.getJavaFileManager(compiler.getStandardFileManager(diagnostics, null, null));
 
-        List<JavaFileObject> jfiles = new ArrayList<>();
-        jfiles.add(new StringJavaFileObject(classInfo.className, javaCode));
+        ClassInfo classInfo = getClassFileFromJavaSource(javaCode);
+        List<JavaFileObject> javaFileObjects = new ArrayList<>();
+        javaFileObjects.add(new StringJavaFileObject(classInfo.className, javaCode));
 
         //使用编译选项可以改变默认编译行为。编译选项是一个元素为String类型的Iterable集合
         List<String> options = new ArrayList<>();
@@ -131,7 +129,7 @@ public class JrcContext {
         options.add(classpath);
 
         StringWriter outWriter = new StringWriter();
-        JavaCompiler.CompilationTask task = compiler.getTask(outWriter, fileManager, diagnostics, options, null, jfiles);
+        JavaCompiler.CompilationTask task = compiler.getTask(outWriter, fileManager, diagnostics, options, null, javaFileObjects);
         // 编译源程序
         boolean success = task.call();
 
@@ -148,12 +146,12 @@ public class JrcContext {
                 error.append(compilePrint(diagnostic));
             }
             logger.error("编译失败. \noutWriter:{} \ndiagnostics info:{}", outWriter.toString(), error.toString());
-            return Result.error(error.toString());
+            return JrcResult.error(error.toString());
         }
 
     }
 
-    private void cacheCompiledClassData(String className, byte[] classBytes) {
+    public void cacheCompiledClassData(String className, byte[] classBytes) {
 
         if (classBytes == null || classBytes.length == 0) {
             return;
@@ -190,7 +188,7 @@ public class JrcContext {
     /***************************************************************************************************
      ***************************************   反编译(Class编译成Java)      ******************************
      ***************************************************************************************************/
-    public Result decompile(byte[] classBytes) throws Exception {
+    public JrcResult decompile(byte[] classBytes) throws Exception {
 
         ClassInfo classInfo = getClassInfoFromClassByteCode(classBytes);
         assert classInfo != null;
@@ -206,7 +204,7 @@ public class JrcContext {
         map.put("methods", classInfo.methodNames);
         map.put("javacontent", writer.toString());
         map.put("key", classInfo.className);
-        return Result.success(map);
+        return JrcResult.success(map);
     }
 
     /**
@@ -320,11 +318,11 @@ public class JrcContext {
      ***************************************  运行方法                     ******************************
      ***************************************************************************************************/
 
-    public Result exec(String className, String methodName) {
+    public JrcResult exec(String className, String methodName) {
 
         byte[] classBytes = getClassBytes(className);
         if (classBytes == null) {
-            return Result.error("没找到class : " + className);
+            return JrcResult.error("没找到class : " + className);
         }
 
         DefineClassLoader defineClassLoader = new DefineClassLoader();
@@ -336,13 +334,13 @@ public class JrcContext {
 
             Object result = method.invoke(clazz.newInstance());
             if (result != null) {
-                return Result.success(result);
+                return JrcResult.success(result);
             } else {
-                return Result.success("执行方法返回类型为void");
+                return JrcResult.success("执行方法返回类型为void");
             }
         } catch (Exception e) {
             logger.error("", e);
-            return Result.error(e.getMessage());
+            return JrcResult.error(e.getMessage());
         }
     }
 
