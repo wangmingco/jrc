@@ -1,6 +1,8 @@
 package co.wangming.jrc;
 
 
+import co.wangming.jrc.classloader.ClassLoaderUtil;
+import co.wangming.jrc.classloader.JrcClassLoader;
 import co.wangming.jrc.manager.JavaFileManagerFactory;
 import co.wangming.jrc.manager.JrcJavaFileManager;
 import com.github.javaparser.JavaParser;
@@ -135,7 +137,7 @@ public class JrcExecutor {
 
         if (success) {
             //如果编译成功，用类加载器加载该类
-            BytesJavaFileObject jco = fileManager.getJavaClassObject();
+            BytesJavaFileObject jco = fileManager.getJavaClassObject(classInfo.className);
             cacheCompiledClassData(classInfo.className, jco.getBytes());
             return decompile(jco.getBytes());
 
@@ -325,9 +327,13 @@ public class JrcExecutor {
             return JrcResult.error("没找到class : " + className);
         }
 
-        DefineClassLoader defineClassLoader = new DefineClassLoader();
+        JrcClassLoader defineClassLoader = ClassLoaderUtil.getClassLoader();
 
         Class<?> clazz = defineClassLoader.defineClass(className, classBytes);
+        if (clazz == null) {
+            logger.error("defineClass 失败:{}", className);
+            return JrcResult.error("defineClass 失败: " + className);
+        }
 
         try {
             Method method = clazz.getMethod(methodName);
@@ -341,13 +347,6 @@ public class JrcExecutor {
         } catch (Exception e) {
             logger.error("", e);
             return JrcResult.error(e.getMessage());
-        }
-    }
-
-    private class DefineClassLoader extends ClassLoader {
-
-        public Class defineClass(String name, byte[] b) {
-            return defineClass(name, b, 0, b.length);
         }
     }
 }

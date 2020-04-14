@@ -28,7 +28,7 @@ public class JrcController {
             byte[] bytes = IOUtils.toByteArray(file.getInputStream());
             return JrcContext.INSTANCE.decompile(bytes);
         } catch (Exception e) {
-            logger.info("decompile", e);
+            logger.error("decompile error", e);
             return JrcResult.error(e.getMessage());
         }
 	}
@@ -40,7 +40,7 @@ public class JrcController {
             logger.info("compileFile : {}", javasource);
             return JrcContext.INSTANCE.compile(javasource);
         } catch (Exception e) {
-            logger.info("compileFile", e);
+            logger.error("compileFile error", e);
             return JrcResult.error(e.getMessage());
         }
 	}
@@ -51,7 +51,7 @@ public class JrcController {
         try {
             return JrcContext.INSTANCE.compile(javasource);
         } catch (Exception e) {
-            logger.info("compileSource", e);
+            logger.error("compileSource error", e);
             return JrcResult.error(e.getMessage());
         }
 	}
@@ -64,7 +64,7 @@ public class JrcController {
             logger.info("appendClassPath");
             return JrcContext.INSTANCE.appendClassPath(bytes);
         } catch (IOException e) {
-            logger.info("appendClassPath", e);
+            logger.error("appendClassPath error", e);
             return JrcResult.error(e.getMessage());
         }
 
@@ -76,7 +76,7 @@ public class JrcController {
         try {
             return JrcContext.INSTANCE.exec(key, method);
         } catch (Exception e) {
-            logger.info("exec", e);
+            logger.error("exec error", e);
             return JrcResult.error(e.getMessage());
         }
 	}

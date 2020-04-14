@@ -1,6 +1,8 @@
 package co.wangming.jrc.manager.springboot;
 
-import org.apache.commons.io.IOUtils;
+import co.wangming.jrc.JrcUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.NestingKind;
@@ -15,27 +17,22 @@ import java.util.zip.ZipEntry;
 
 public class JarJavaFileObject implements JavaFileObject {
 
+    private static final Logger logger = LoggerFactory.getLogger(JarJavaFileObject.class);
+
     private final Kind kind;
     private final SpringBootArchiveEntry springBootArchiveEntry;
     private URI uri;
+    private String className;
 
     public JarJavaFileObject(SpringBootArchiveEntry springBootArchiveEntry, Kind kind) {
+        className = JrcUtil.getClassNameFromPath(springBootArchiveEntry.archiveEntry.getName());
+
         this.kind = kind;
         this.springBootArchiveEntry = springBootArchiveEntry;
         try {
             uri = URI.create(springBootArchiveEntry.archive.getUrl().toString() + springBootArchiveEntry.archiveEntry.getName());
         } catch (MalformedURLException e) {
-        }
-    }
-
-
-    public byte[] getBytes() {
-        try {
-            InputStream in = openInputStream();
-            return IOUtils.toByteArray(in);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return new byte[]{};
+            logger.error("", e);
         }
     }
 
@@ -46,6 +43,8 @@ public class JarJavaFileObject implements JavaFileObject {
 
     @Override
     public boolean isNameCompatible(String simpleName, Kind kind) {
+        logger.info("isNameCompatible");
+
         String baseName = simpleName + kind.extension;
         return kind.equals(getKind())
                 && (baseName.equals(toUri().getPath())
@@ -54,33 +53,43 @@ public class JarJavaFileObject implements JavaFileObject {
 
     @Override
     public NestingKind getNestingKind() {
+        logger.info("getNestingKind");
+
         return null;
     }
 
     @Override
     public Modifier getAccessLevel() {
+        logger.info("getAccessLevel");
+
         return null;
     }
 
     @Override
     public URI toUri() {
+        logger.info("toUri");
+
         return uri;
     }
 
     @Override
     public String getName() {
-        return springBootArchiveEntry.archiveEntry.getName();
+        return className;
     }
 
     @Override
     public InputStream openInputStream() throws IOException {
+
         try {
             String classEntryName = springBootArchiveEntry.archiveEntry.getName();
+
             URLConnection connection = springBootArchiveEntry.archive.getUrl().openConnection();
 
             JarFile jarFile = ((JarURLConnection) connection).getJarFile();
             ZipEntry entry = jarFile.getEntry(classEntryName);
-            return jarFile.getInputStream(entry);
+            InputStream in = jarFile.getInputStream(entry);
+
+            return in;
         } catch (IOException ex) {
             // Ignore
             return null;
@@ -90,11 +99,15 @@ public class JarJavaFileObject implements JavaFileObject {
 
     @Override
     public OutputStream openOutputStream() throws IOException {
+        logger.info("openOutputStream");
+
         return null;
     }
 
     @Override
     public Reader openReader(boolean ignoreEncodingErrors) throws IOException {
+        logger.info("openReader");
+
         try {
             String classEntryName = springBootArchiveEntry.archiveEntry.getName();
             URLConnection connection = springBootArchiveEntry.archive.getUrl().openConnection();
@@ -110,21 +123,29 @@ public class JarJavaFileObject implements JavaFileObject {
 
     @Override
     public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
+        logger.info("getCharContent");
+
         return null;
     }
 
     @Override
     public Writer openWriter() throws IOException {
+        logger.info("openWriter");
+
         return null;
     }
 
     @Override
     public long getLastModified() {
+        logger.info("getLastModified");
+
         return 0;
     }
 
     @Override
     public boolean delete() {
+        logger.info("delete");
+
         return false;
     }
 }

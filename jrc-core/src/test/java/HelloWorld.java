@@ -6,6 +6,8 @@ import org.slf4j.LoggerFactory;
 public class HelloWorld {
 
     public static String getLogger() {
+
+        LoggerFactory.getLogger("HelloWorld");
         LoggerFactory.getLogger(HelloWorld.class);
 
         return "OK";
