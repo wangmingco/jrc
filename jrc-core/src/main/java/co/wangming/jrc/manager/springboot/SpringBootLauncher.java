@@ -110,8 +110,7 @@ public class SpringBootLauncher extends Launcher {
     @Override
     protected void launch(String[] args, String mainClass, ClassLoader classLoader) throws Exception {
         Thread.currentThread().setContextClassLoader(classLoader);
-        ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        ClassLoaderUtil.setClassLoader(new JrcLaunchedURLClassLoader(cl));
+        ClassLoaderUtil.setClassLoader(classLoader);
     }
 
     public void launch() throws Exception {

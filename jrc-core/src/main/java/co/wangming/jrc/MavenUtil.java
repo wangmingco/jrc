@@ -1,5 +1,6 @@
 package co.wangming.jrc;
 
+import co.wangming.jrc.classloader.ClassLoaderUtil;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpEntity;
@@ -73,6 +74,8 @@ public class MavenUtil {
 
             String fileName = GroupId + "." + ArtifactId + "." + LatestVersion + ".jar";
             httpclient.execute(httpget, new FileDownloadResponseHandler(fileName));
+
+            ClassLoaderUtil.setClassLoader(null);
 
             return JrcResult.success();
         } catch (IOException e) {

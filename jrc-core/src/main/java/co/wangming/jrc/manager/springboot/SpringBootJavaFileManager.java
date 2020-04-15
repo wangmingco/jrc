@@ -31,7 +31,7 @@ public class SpringBootJavaFileManager extends JrcJavaFileManager {
 
     @Override
     public ClassLoader getClassLoader(Location location) {
-        return ClassLoaderUtil.getClassLoader().getClassLoader();
+        return ClassLoaderUtil.getClassLoader();
     }
 
     @Override

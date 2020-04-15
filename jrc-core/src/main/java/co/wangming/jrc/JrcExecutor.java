@@ -81,6 +81,8 @@ public class JrcExecutor {
             appendClassPath(libFile.getCanonicalPath());
             addRuntimeClassPath(libFile.getCanonicalPath());
 
+            ClassLoaderUtil.setClassLoader(null);
+
             return JrcResult.success(getAllCallpath());
         } catch (Exception e) {
             logger.error("", e);
