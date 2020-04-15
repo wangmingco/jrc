@@ -4,6 +4,7 @@ jrc-core/target
 jrc-sample/jrc-web-client/node_modules
 jrc-sample/jrc-web-client/dist
 jrc-sample/jrc-web-server/target
+jrc-sample/jrc-web-server/lib
 
 # Compiled class file
 *.class

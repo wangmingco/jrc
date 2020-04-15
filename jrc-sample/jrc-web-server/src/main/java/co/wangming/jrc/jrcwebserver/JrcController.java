@@ -1,13 +1,13 @@
 package co.wangming.jrc.jrcwebserver;
 
 import co.wangming.jrc.JrcResult;
+import co.wangming.jrc.MavenUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -46,7 +46,7 @@ public class JrcController {
 	}
 
 	@PostMapping(value = "/uploadJavaSource")
-    public JrcResult uploadJavaSource(@RequestParam("javasource") String javasource) {
+    public JrcResult uploadJavaSource(@RequestBody String javasource) {
         logger.info("uploadJavaSource param:{}", javasource);
         try {
             return JrcContext.INSTANCE.compile(javasource);
@@ -102,4 +102,21 @@ public class JrcController {
             return JrcResult.error(e.getMessage());
         }
 	}
+
+    @PostMapping(value = "/searchJar")
+    public JrcResult searchJar(@RequestParam("searchJarKeyword") String searchJarKeyword) {
+        logger.info("searchJar {}", searchJarKeyword);
+        return MavenUtil.searchJar(searchJarKeyword);
+    }
+
+    @PostMapping(value = "/downloadJar")
+    public JrcResult downloadJar(@RequestBody String body) {
+
+        JSONObject json = JSON.parseObject(body);
+
+        logger.info("downloadJar {}", body);
+
+        MavenUtil.downloadJar(json);
+        return JrcResult.success();
+    }
 }

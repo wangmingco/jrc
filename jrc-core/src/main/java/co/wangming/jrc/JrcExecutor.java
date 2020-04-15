@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import javax.tools.*;
 import java.io.*;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
@@ -171,11 +172,11 @@ public class JrcExecutor {
         Map<String, byte[]> cache = classBytesCache.get(className);
         if (cache == null) {
             cache = new HashMap<>();
-            cache.put(type + "_V1", classBytes);
+            cache.put(className + "_V1_" + type, classBytes);
             classBytesCache.put(className, cache);
         } else {
 
-            cache.put(type + "_V" + (cache.size() + 1), classBytes);
+            cache.put(className + "_V" + (cache.size() + 1) + "_" + type, classBytes);
         }
 
         return cache;
@@ -375,8 +376,13 @@ public class JrcExecutor {
 
         try {
             Method method = clazz.getMethod(methodName);
+            Object result = null;
+            if (Modifier.isStatic(method.getModifiers())) {
+                result = method.invoke(clazz);
+            } else {
+                result = method.invoke(clazz.newInstance());
+            }
 
-            Object result = method.invoke(clazz.newInstance());
             if (result != null) {
                 return JrcResult.success(result);
             } else {

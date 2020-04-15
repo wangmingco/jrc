@@ -1,3 +1,5 @@
+package co.wangming.jrc;
+
 import org.slf4j.LoggerFactory;
 
 /**
@@ -7,7 +9,7 @@ public class HelloWorld {
 
     public static String getLogger() {
 
-        LoggerFactory.getLogger("HelloWorld");
+        LoggerFactory.getLogger("co.wangming.jrc.HelloWorld");
         LoggerFactory.getLogger(HelloWorld.class);
 
         return "OK";

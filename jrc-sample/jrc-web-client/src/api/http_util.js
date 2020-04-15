@@ -1,6 +1,6 @@
 import request1 from '@/utils/request'
 
-export function httpPost(params, request_url) {
+export function httpParamPost(params, request_url) {
   return request1({
     url: request_url,
     method: 'post',
@@ -8,7 +8,7 @@ export function httpPost(params, request_url) {
   })
 }
 
-export function post(params, request_url) {
+export function httpDataPost(params, request_url) {
   return request1({
     url: request_url,
     method: 'post',

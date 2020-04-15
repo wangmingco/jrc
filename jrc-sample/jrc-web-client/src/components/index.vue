@@ -63,6 +63,10 @@
       <el-col :span="2"> 
         <el-button style="margin-left: 10px;" size="small" type="success" @click="jarUploadDialogVisible = true">上传依赖Jar</el-button>
       </el-col>
+
+      <el-col :span="2"> 
+        <el-button style="margin-left: 10px;" size="small" type="success" @click="jarDownloadDialogVisible = true">从仓库下载依赖Jar</el-button>
+      </el-col>
     </el-row>
 
     <el-row>
@@ -126,18 +130,74 @@
       </el-upload>
 
     </el-dialog>
+
+    <el-dialog
+        title="从仓库下载依赖Jar"
+        :visible.sync="jarDownloadDialogVisible"
+        width="70%">
+
+        <el-row>
+          <el-col :span="15">
+             <el-input
+                type="text"
+                placeholder="搜索关键字"
+                v-model="searchJarKeyword">
+            </el-input>
+          </el-col>
+
+          <el-col :span="2">
+             <el-button style="margin-left: 10px;" size="small" type="success" @click="searchJar">搜索</el-button>
+          </el-col>
+        </el-row>
+       		 		
+        <el-table
+          :data="jarList"
+          border
+          style="width: 100%">
+          <el-table-column
+            fixed
+            prop="g"
+            label="GroupId">
+          </el-table-column>
+          
+          <el-table-column
+            prop="a"
+            label="ArtifactId">
+          </el-table-column>
+
+          <el-table-column
+            prop="latestVersion"
+            label="Latest Version">
+          </el-table-column>
+
+          <el-table-column
+            prop="timestamp"
+            label="Updated">
+          </el-table-column>
+          
+          <el-table-column
+            fixed="right"
+            label="操作"
+            width="100">
+            <template slot-scope="scope">
+              <el-button @click="downloadJar(scope.row)" type="text" size="small">下载</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+    </el-dialog>
   
   </div>
 </template>
 
 <script>
-import { httpPost } from "@/api/http_util";
+import { httpParamPost, httpDataPost } from "@/api/http_util";
 
 export default {
   
   data() {
     return {
       jarUploadDialogVisible: false,
+      jarDownloadDialogVisible: false,
       sourceTypes: ['编辑Java源码', '上传Java文件', '上传Class文件'],
       selectedSourceType: '编辑Java源码',
       javaMethods: [],
@@ -152,11 +212,10 @@ export default {
       javasource: "",
       result: "",
       javacontent: "",
-      fileList: []
+      fileList: [],
+      searchJarKeyword: "",
+      jarList: []
     };
-  },
-  created() {
-   
   },
   methods: {
      submitUpload() {
@@ -167,10 +226,7 @@ export default {
           this.selectedSourceType == '上传Class文件') {
           this.$refs.upload.submit();
        } else {
-         let query =  {
-            javasource : this.javasource
-          }
-          httpPost(query, '/jrc/uploadJavaSource').then(response=> {
+          httpDataPost(this.javasource, '/jrc/uploadJavaSource').then(response=> {
             
             this.$notify({
               title: '执行完成',
@@ -203,7 +259,7 @@ export default {
             className : this.className,
             version : this.selectVersion
         }
-        httpPost(query, '/jrc/classInfo').then(response=> {
+        httpParamPost(query, '/jrc/classInfo').then(response=> {
           this.javaMethods = response.data.methodNames;
           if(this.javaMethods.length > 0) {
             this.selectMethod = this.javaMethods[0]
@@ -217,7 +273,7 @@ export default {
             className : this.className,
             version : this.selectVersion
         }
-        httpPost(query, '/jrc/decompile').then(response=> {
+        httpParamPost(query, '/jrc/decompile').then(response=> {
           this.javacontent = response.data.source;
         }).catch(err => {
             this.$message.error("/jrc/decompile request error  " + err)
@@ -253,7 +309,7 @@ export default {
             className: this.className,
             version: this.selectVersion
           }
-          httpPost(query, '/jrc/executeMethod').then(res=> {
+          httpParamPost(query, '/jrc/executeMethod').then(res=> {
             
             this.$notify({
               title: '执行完成',
@@ -282,6 +338,24 @@ export default {
       },
       downloadFile(url){
         window.open(url);
+      },
+      searchJar() {
+        let query =  {
+            searchJarKeyword : this.searchJarKeyword
+        }
+        httpParamPost(query, '/jrc/searchJar').then(response=> {
+          var responseData = JSON.parse(response.data);
+          this.jarList = responseData.response.docs;
+        }).catch(err => {
+            this.$message.error("/jrc/searchJar request error  " + err)
+        })
+      },
+      downloadJar(row) {
+        httpDataPost(row, '/jrc/downloadJar').then(response=> {
+          
+        }).catch(err => {
+            this.$message.error("/jrc/downloadJar request error  " + err)
+        })
       }
     }
   };
