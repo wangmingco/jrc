@@ -43,4 +43,9 @@ public class JrcLaunchedURLClassLoader implements JrcClassLoader {
             return null;
         }
     }
+
+    @Override
+    public ClassLoader getClassLoader() {
+        return launchedURLClassLoader;
+    }
 }

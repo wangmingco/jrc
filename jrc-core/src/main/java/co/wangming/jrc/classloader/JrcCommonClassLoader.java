@@ -11,4 +11,9 @@ public class JrcCommonClassLoader extends ClassLoader implements JrcClassLoader 
         return defineClass(name, b, 0, b.length);
     }
 
+    @Override
+    public ClassLoader getClassLoader() {
+        return this;
+    }
+
 }

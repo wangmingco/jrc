@@ -67,6 +67,12 @@
 
     <el-row>
       <el-col :span="4"> 
+        <el-select v-model="selectVersion" placeholder="请选择要执行的版本" @change='changeVersion'>
+            <el-option v-for="item in versions" :key="item" :label="item" :value="item" >
+            </el-option>
+          </el-select>
+      </el-col>
+      <el-col :span="4"> 
         <el-select v-model="selectMethod" placeholder="请选择要执行的方法">
             <el-option v-for="item in javaMethods" :key="item" :label="item" :value="item" >
             </el-option>
@@ -135,8 +141,10 @@ export default {
       sourceTypes: ['编辑Java源码', '上传Java文件', '上传Class文件'],
       selectedSourceType: '编辑Java源码',
       javaMethods: [],
+      versions: [],
       selectMethod: null,
-      key: "",
+      selectVersion: null,
+      className: "",
       data: {
         table: "",
         skipFields: ""
@@ -170,24 +178,50 @@ export default {
               message: "",
               duration: 5000
             });
-
-            console.info("/jrc/uploadJavaSource 应答结果: ", response.data)
             
-            this.javacontent = response.data.javacontent;
-            this.javaMethods = response.data.methods;
-            this.key = response.data.key;
+            this.versions = response.data.versions;
+            this.className = response.data.className;
 
-            console.info("/jrc/uploadJavaSource method 内容: ", this.javaMethods)
-
-            if(this.javaMethods.length > 0) {
-              this.selectMethod = this.javaMethods[0]
+            if(this.versions.length > 0) {
+              this.selectVersion = this.versions[0]
             }
 
+            this.queryClassInfo()
+            this.decompile()
           }).catch(err => {
             this.$message.error("/jrc/uploadJavaSource request error  " + err)
           })
        }
         
+      },
+      changeVersion() {
+        this.queryClassInfo()
+        this.decompile()
+      },
+      queryClassInfo() {
+        let query =  {
+            className : this.className,
+            version : this.selectVersion
+        }
+        httpPost(query, '/jrc/classInfo').then(response=> {
+          this.javaMethods = response.data.methodNames;
+          if(this.javaMethods.length > 0) {
+            this.selectMethod = this.javaMethods[0]
+          }
+        }).catch(err => {
+            this.$message.error("/jrc/classInfo request error  " + err)
+        })
+      },
+      decompile() {
+        let query =  {
+            className : this.className,
+            version : this.selectVersion
+        }
+        httpPost(query, '/jrc/decompile').then(response=> {
+          this.javacontent = response.data.source;
+        }).catch(err => {
+            this.$message.error("/jrc/decompile request error  " + err)
+        })
       },
       handleRemove(file, fileList) {
         console.log(file, fileList);
@@ -196,15 +230,28 @@ export default {
         console.log(file);
       },
       handleSuccess(response, file, fileList) {
-         this.javacontent = response.data.javacontent;
-         this.javaMethods = response.data.methods
-         this.selectMethod = this.javaMethods[0]
-         this.key = response.data.key;
+         this.$notify({
+              title: '执行完成',
+              type: 'success',
+              message: "",
+              duration: 5000
+            });
+            
+            this.versions = response.data.versions;
+            this.className = response.data.className;
+
+            if(this.versions.length > 0) {
+              this.selectVersion = this.versions[0]
+            }
+
+            this.queryClassInfo()
+            this.decompile()
       },
       invokeMethod() {
          let query =  {
             method : this.selectMethod,
-            key: this.key
+            className: this.className,
+            version: this.selectVersion
           }
           httpPost(query, '/jrc/executeMethod').then(res=> {
             

@@ -23,10 +23,10 @@ public class JrcController {
 
 	@PostMapping(value = "/uploadClassFile")
 	public JrcResult uploadClassFile(@RequestParam("file") MultipartFile file) {
-		logger.info("decompile");
+        logger.info("uploadClassFile start");
         try {
             byte[] bytes = IOUtils.toByteArray(file.getInputStream());
-            return JrcContext.INSTANCE.decompile(bytes);
+            return JrcContext.INSTANCE.cacheClassFile(bytes);
         } catch (Exception e) {
             logger.error("decompile error", e);
             return JrcResult.error(e.getMessage());
@@ -37,7 +37,7 @@ public class JrcController {
 	public JrcResult uploadJavaFile(@RequestParam("file") MultipartFile file) {
         try {
             String javasource = IOUtils.toString(file.getInputStream(), "UTF8");
-            logger.info("compileFile : {}", javasource);
+            logger.info("uploadJavaFile param : {}", javasource);
             return JrcContext.INSTANCE.compile(javasource);
         } catch (Exception e) {
             logger.error("compileFile error", e);
@@ -47,7 +47,7 @@ public class JrcController {
 
 	@PostMapping(value = "/uploadJavaSource")
     public JrcResult uploadJavaSource(@RequestParam("javasource") String javasource) {
-        logger.info("compileSource:{}", javasource);
+        logger.info("uploadJavaSource param:{}", javasource);
         try {
             return JrcContext.INSTANCE.compile(javasource);
         } catch (Exception e) {
@@ -70,11 +70,33 @@ public class JrcController {
 
 	}
 
-	@PostMapping(value = "/executeMethod")
-	public JrcResult executeMethod(@RequestParam("key") String key, @RequestParam("method") String method) {
-		logger.info("execute {} - {}", key, method);
+    @PostMapping(value = "/classInfo")
+    public JrcResult classInfo(@RequestParam("className") String className, @RequestParam("version") String version) {
         try {
-            return JrcContext.INSTANCE.exec(key, method);
+            return JrcContext.INSTANCE.classInfo(className, version);
+        } catch (Exception e) {
+            logger.error("exec error", e);
+            return JrcResult.error(e.getMessage());
+        }
+    }
+
+    @PostMapping(value = "/decompile")
+    public JrcResult decompile(@RequestParam("className") String className, @RequestParam("version") String version) {
+        try {
+            return JrcContext.INSTANCE.decompile(className, version);
+        } catch (Exception e) {
+            logger.error("exec error", e);
+            return JrcResult.error(e.getMessage());
+        }
+    }
+
+	@PostMapping(value = "/executeMethod")
+    public JrcResult executeMethod(@RequestParam("className") String className,
+                                   @RequestParam("version") String version,
+                                   @RequestParam("method") String method) {
+        logger.info("execute {} - {} - {}", className, version, method);
+        try {
+            return JrcContext.INSTANCE.exec(className, version, method);
         } catch (Exception e) {
             logger.error("exec error", e);
             return JrcResult.error(e.getMessage());

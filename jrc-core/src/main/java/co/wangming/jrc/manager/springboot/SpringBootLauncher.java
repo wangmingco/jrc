@@ -1,5 +1,7 @@
 package co.wangming.jrc.manager.springboot;
 
+import co.wangming.jrc.classloader.ClassLoaderUtil;
+import co.wangming.jrc.classloader.JrcLaunchedURLClassLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.loader.Launcher;
@@ -14,7 +16,7 @@ import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.jar.Manifest;
 
-class SpringBootLauncher extends Launcher {
+public class SpringBootLauncher extends Launcher {
 
     private static final Logger logger = LoggerFactory.getLogger(SpringBootLauncher.class);
 
@@ -108,6 +110,8 @@ class SpringBootLauncher extends Launcher {
     @Override
     protected void launch(String[] args, String mainClass, ClassLoader classLoader) throws Exception {
         Thread.currentThread().setContextClassLoader(classLoader);
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        ClassLoaderUtil.setClassLoader(new JrcLaunchedURLClassLoader(cl));
     }
 
     public void launch() throws Exception {

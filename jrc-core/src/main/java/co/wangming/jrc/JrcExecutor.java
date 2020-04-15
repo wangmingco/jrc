@@ -38,7 +38,7 @@ public class JrcExecutor {
 
     private static final Logger logger = LoggerFactory.getLogger(JrcExecutor.class);
 
-    private final Map<String, byte[]> classBytesCache = new ConcurrentHashMap<>();
+    private final Map<String, Map<String,byte[]>> classBytesCache = new ConcurrentHashMap<>();
 
     private static final List<String> skip = new ArrayList() {{
         for (Method method : Object.class.getMethods()) {
@@ -89,8 +89,6 @@ public class JrcExecutor {
 
     private void appendClassPath(String cp) {
         classpath += File.pathSeparator + cp;
-
-//        logger.info("添加classpath: {}, {}", cp, File.pathSeparator);
     }
 
     private void addRuntimeClassPath(String jar) throws Exception {
@@ -138,8 +136,11 @@ public class JrcExecutor {
         if (success) {
             //如果编译成功，用类加载器加载该类
             BytesJavaFileObject jco = fileManager.getJavaClassObject(classInfo.className);
-            cacheCompiledClassData(classInfo.className, jco.getBytes());
-            return decompile(jco.getBytes());
+            Map<String, byte[]> cache = cacheCompiledClassData(classInfo.className, jco.getBytes(), "Java");
+            Map<String, Object> map = new HashMap<>();
+            map.put("versions", cache.keySet());
+            map.put("className", classInfo.className);
+            return JrcResult.success(map);
 
         } else {
             //如果想得到具体的编译错误，可以对Diagnostics进行扫描
@@ -153,10 +154,10 @@ public class JrcExecutor {
 
     }
 
-    public void cacheCompiledClassData(String className, byte[] classBytes) {
+    public Map<String, byte[]> cacheCompiledClassData(String className, byte[] classBytes, String type) {
 
         if (classBytes == null || classBytes.length == 0) {
-            return;
+            return null;
         }
 
         if (classBytes[0] != -54 &&
@@ -164,14 +165,28 @@ public class JrcExecutor {
                 classBytes[2] != -70 &&
                 classBytes[3] != -66
         ) {
-            return;
+            return null;
         }
 
-        classBytesCache.put(className, classBytes);
+        Map<String, byte[]> cache = classBytesCache.get(className);
+        if (cache == null) {
+            cache = new HashMap<>();
+            cache.put(type + "_V1", classBytes);
+            classBytesCache.put(className, cache);
+        } else {
+
+            cache.put(type + "_V" + (cache.size() + 1), classBytes);
+        }
+
+        return cache;
     }
 
-    private byte[] getClassBytes(String className) {
-        return classBytesCache.get(className);
+    private byte[] getClassBytes(String className, String version) {
+        Map<String, byte[]> cache = classBytesCache.get(className);
+        if (cache == null) {
+            return null;
+        }
+        return cache.get(version);
     }
 
     private String compilePrint(Diagnostic diagnostic) {
@@ -190,22 +205,33 @@ public class JrcExecutor {
     /***************************************************************************************************
      ***************************************   反编译(Class编译成Java)      ******************************
      ***************************************************************************************************/
-    public JrcResult decompile(byte[] classBytes) throws Exception {
-
-        ClassInfo classInfo = getClassInfoFromClassByteCode(classBytes);
-        assert classInfo != null;
-        String className = classInfo.className;
-
+    public JrcResult decompile(String className, String version) throws Exception {
+        byte[] bytes = getClassBytes(className, version);
+        if (bytes == null) {
+            return JrcResult.error("没有找到目标类");
+        }
         final StringWriter writer = new StringWriter();
         final DecompilerSettings settings = DecompilerSettings.javaDefaults();
-        DefineClasspathTypeLoader defineClasspathTypeLoader = new DefineClasspathTypeLoader(className, classBytes);
+        DefineClasspathTypeLoader defineClasspathTypeLoader = new DefineClasspathTypeLoader(className, bytes);
         settings.setTypeLoader(defineClasspathTypeLoader);
         Decompiler.decompile(className, new PlainTextOutput(writer), settings);
 
         Map<String, Object> map = new HashMap<>();
-        map.put("methods", classInfo.methodNames);
-        map.put("javacontent", writer.toString());
-        map.put("key", classInfo.className);
+        map.put("source", writer.toString());
+        return JrcResult.success(map);
+    }
+
+
+    public JrcResult cacheClassFile(byte[] classBytes) throws Exception {
+
+        ClassInfo classInfo = getClassInfoFromClassByteCode(classBytes);
+        assert classInfo != null;
+
+        Map<String, byte[]> cache = cacheCompiledClassData(classInfo.className, classBytes, "Class");
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("versions", cache.keySet());
+        map.put("className", classInfo.className);
         return JrcResult.success(map);
     }
 
@@ -241,7 +267,19 @@ public class JrcExecutor {
     /***************************************************************************************************
      ***************************************   获取类信息                  ******************************
      ***************************************************************************************************/
-    private static ClassInfo getClassInfoFromClassByteCode(final byte[] bytes) throws IOException, NotFoundException {
+    public ClassInfo getClassInfoFromClassByteCode(String className, String version) throws IOException, NotFoundException {
+        Map<String, byte[]> cache = classBytesCache.get(className);
+        if (cache == null) {
+            return null;
+        }
+        byte[] bytes = cache.get(version);
+        if (bytes == null) {
+            return null;
+        }
+        return getClassInfoFromClassByteCode(bytes);
+    }
+
+    private ClassInfo getClassInfoFromClassByteCode(final byte[] bytes) throws IOException, NotFoundException {
 
         try {
             ClassPool cp = ClassPool.getDefault();
@@ -313,16 +351,16 @@ public class JrcExecutor {
 
     public static final class ClassInfo {
         public String className;
-        List<String> methodNames;
+        public List<String> methodNames;
     }
 
     /***************************************************************************************************
      ***************************************  运行方法                     ******************************
      ***************************************************************************************************/
 
-    public JrcResult exec(String className, String methodName) {
+    public JrcResult exec(String className, String version, String methodName) {
 
-        byte[] classBytes = getClassBytes(className);
+        byte[] classBytes = getClassBytes(className, version);
         if (classBytes == null) {
             return JrcResult.error("没找到class : " + className);
         }
