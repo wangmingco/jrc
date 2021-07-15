@@ -4,8 +4,7 @@ package co.wangming.jrc.jrcwebserver;
 import co.wangming.jrc.JrcExecutor;
 import co.wangming.jrc.JrcResult;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 public enum JrcContext {
 
@@ -29,15 +28,13 @@ public enum JrcContext {
         return jrcExecutor.decompile(className, version);
     }
 
-    public JrcResult classInfo(String className, String version) {
+    public JrcResult getClassVersionMethods() {
         try {
-            JrcExecutor.ClassInfo classInfo = jrcExecutor.getClassInfoFromClassByteCode(className, version);
+            List<JrcExecutor.ClassInfo> classInfo = jrcExecutor.getClassVersionMethods();
             if (classInfo == null) {
                 return JrcResult.error("找不到目标类字节码");
             }
-            Map<String, Object> map = new HashMap<>();
-            map.put("methodNames", classInfo.methodNames);
-            return JrcResult.success(map);
+            return JrcResult.success(classInfo);
         } catch (Exception e) {
             return JrcResult.error(e.getMessage());
         }

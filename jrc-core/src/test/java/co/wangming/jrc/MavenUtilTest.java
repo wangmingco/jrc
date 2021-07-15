@@ -7,7 +7,7 @@ import org.junit.Test;
 
 public class MavenUtilTest {
 
-    @Test
+//    @Test
     public void searchJar() {
         JrcResult result = MavenUtil.searchJar("netty");
 

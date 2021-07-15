@@ -9,9 +9,7 @@ import javax.tools.ForwardingJavaFileManager;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 
 public abstract class JrcJavaFileManager extends ForwardingJavaFileManager {
 
@@ -20,7 +18,7 @@ public abstract class JrcJavaFileManager extends ForwardingJavaFileManager {
     /**
      * 保存编译后Class文件的对象
      */
-    private Map<String, BytesJavaFileObject> fileObjectHashMap = new HashMap<>();
+    private BytesJavaFileObject bytesJavaFileObject;
 
     /**
      * Creates a new instance of ForwardingJavaFileManager.
@@ -32,7 +30,7 @@ public abstract class JrcJavaFileManager extends ForwardingJavaFileManager {
     }
 
     public BytesJavaFileObject getJavaClassObject(String className) {
-        return fileObjectHashMap.get(className);
+        return bytesJavaFileObject;
     }
 
     /**
@@ -41,14 +39,8 @@ public abstract class JrcJavaFileManager extends ForwardingJavaFileManager {
     @Override
     public JavaFileObject getJavaFileForOutput(Location location, String className, JavaFileObject.Kind kind, FileObject sibling) {
 
-        BytesJavaFileObject fileObject = fileObjectHashMap.get(className);
-        if (fileObject == null) {
-            fileObject = new BytesJavaFileObject(className, kind);
-            fileObjectHashMap.put(className, fileObject);
-            return fileObject;
-        } else {
-            return fileObject;
-        }
+        this.bytesJavaFileObject = new BytesJavaFileObject(className, kind);
+        return bytesJavaFileObject;
 
     }
 

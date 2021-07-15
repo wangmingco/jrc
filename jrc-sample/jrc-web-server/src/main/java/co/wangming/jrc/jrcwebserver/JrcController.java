@@ -23,7 +23,6 @@ public class JrcController {
 
 	@PostMapping(value = "/uploadClassFile")
 	public JrcResult uploadClassFile(@RequestParam("file") MultipartFile file) {
-        logger.info("uploadClassFile start");
         try {
             byte[] bytes = IOUtils.toByteArray(file.getInputStream());
             return JrcContext.INSTANCE.cacheClassFile(bytes);
@@ -37,7 +36,6 @@ public class JrcController {
 	public JrcResult uploadJavaFile(@RequestParam("file") MultipartFile file) {
         try {
             String javasource = IOUtils.toString(file.getInputStream(), "UTF8");
-            logger.info("uploadJavaFile param : {}", javasource);
             return JrcContext.INSTANCE.compile(javasource);
         } catch (Exception e) {
             logger.error("compileFile error", e);
@@ -47,7 +45,6 @@ public class JrcController {
 
 	@PostMapping(value = "/uploadJavaSource")
     public JrcResult uploadJavaSource(@RequestBody String javasource) {
-        logger.info("uploadJavaSource param:{}", javasource);
         try {
             return JrcContext.INSTANCE.compile(javasource);
         } catch (Exception e) {
@@ -68,12 +65,12 @@ public class JrcController {
             return JrcResult.error(e.getMessage());
         }
 
-	}
+    }
 
-    @PostMapping(value = "/classInfo")
-    public JrcResult classInfo(@RequestParam("className") String className, @RequestParam("version") String version) {
+    @PostMapping(value = "/getClassVersionMethods")
+    public JrcResult getClassVersionMethods() {
         try {
-            return JrcContext.INSTANCE.classInfo(className, version);
+            return JrcContext.INSTANCE.getClassVersionMethods();
         } catch (Exception e) {
             logger.error("exec error", e);
             return JrcResult.error(e.getMessage());

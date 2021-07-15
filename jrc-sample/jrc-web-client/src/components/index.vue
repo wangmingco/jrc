@@ -1,27 +1,45 @@
 <template>
   <div class="app-container">
     <el-row>
-      <el-col :span="3"> <el-tag>Java脚本执行器.</el-tag></el-col>
+      <el-col :span="3">
+        <el-tag>Java脚本执行器.</el-tag>
+        <el-tag type="danger">不支持方法重写.</el-tag>
+      </el-col>
     </el-row>
 
-     <el-row>
-      <el-col :span="4"> 
+    <el-row>
+      <el-col :span="2">
         <el-select v-model="selectedSourceType" placeholder="请选择源码操作类型">
-          <el-option v-for="item in sourceTypes" :key="item" :label="item" :value="item" />
+          <el-option v-for="item in sourceTypes" :key="item" :label="item" :value="item"/>
         </el-select>
       </el-col>
-      
-      <el-col :span="18"> 
-          <el-input
-            v-show="selectedSourceType == '编辑Java源码'"
-            type="textarea"
-            :autosize="{ minRows: 1, maxRows: 300}"
-            placeholder="上传的Java代码"
-            v-model="javasource">
-          </el-input>
+
+      <el-col :span="2">
+        <el-button style="margin-left: 10px;" size="small" type="success" @click="jarUploadDialogVisible = true">
+          上传依赖Jar
+        </el-button>
       </el-col>
 
-      <el-col :span="2"> 
+      <el-col :span="2">
+        <el-button style="margin-left: 10px;" size="small" type="success" @click="jarDownloadDialogVisible = true">
+          从仓库下载依赖Jar
+        </el-button>
+      </el-col>
+
+    </el-row>
+
+    <el-row>
+      <el-col :span="18">
+        <el-input
+            v-show="selectedSourceType == '编辑Java源码'"
+            type="textarea"
+            :autosize="{ minRows: 5, maxRows: 300}"
+            placeholder="上传的Java代码"
+            v-model="javasource">
+        </el-input>
+      </el-col>
+
+      <el-col :span="2">
         <el-upload
             v-show="selectedSourceType == '上传Java文件'"
             :data="data"
@@ -33,58 +51,54 @@
             :on-remove="handleRemove"
             :file-list="fileList"
             :auto-upload="false">
-            <el-button slot="trigger" size="small" type="primary">选取Java文件</el-button>
-          </el-upload>
-      </el-col>
-      
-      <el-col :span="2"> 
-        <el-upload
-              v-show="selectedSourceType == '上传Class文件'"
-              :data="data"
-              class="upload-demo"
-              ref="upload"
-              action="/jrc/uploadClassFile"
-              :on-success="handleSuccess"
-              :on-preview="handlePreview"
-              :on-remove="handleRemove"
-              :file-list="fileList"
-              :auto-upload="false">
-              <el-button slot="trigger" size="small" type="primary">选取Class文件</el-button>
+          <el-button slot="trigger" size="small" type="primary">选取Java文件</el-button>
         </el-upload>
-            
+      </el-col>
+
+      <el-col :span="2">
+        <el-upload
+            v-show="selectedSourceType == '上传Class文件'"
+            :data="data"
+            class="upload-demo"
+            ref="upload"
+            action="/jrc/uploadClassFile"
+            :on-success="handleSuccess"
+            :on-preview="handlePreview"
+            :on-remove="handleRemove"
+            :file-list="fileList"
+            :auto-upload="false">
+          <el-button slot="trigger" size="small" type="primary">选取Class文件</el-button>
+        </el-upload>
+
       </el-col>
     </el-row>
 
     <el-row>
-      <el-col :span="2"> 
+      <el-col :span="9">
+        <el-select v-model="selectClass" placeholder="请选择要执行类" @change='changeClass' style="width:100%">
+          <el-option v-for="item in classes" :key="item" :label="item" :value="item">
+          </el-option>
+        </el-select>
+      </el-col>
+      <el-col :span="3">
+        <el-select v-model="selectVersion" placeholder="请选择要执行的版本" @change='changeVersion'>
+          <el-option v-for="item in versions" :key="item" :label="item" :value="item">
+          </el-option>
+        </el-select>
+      </el-col>
+      <el-col :span="2.7">
+        <el-select v-model="selectMethod" placeholder="请选择要执行的方法">
+          <el-option v-for="item in javaMethods" :key="item" :label="item" :value="item">
+          </el-option>
+        </el-select>
+      </el-col>
+
+      <el-col :span="2">
         <el-button style="margin-left: 10px;" size="small" type="success" @click="submitUpload">上传源码</el-button>
       </el-col>
 
-      <el-col :span="2"> 
-        <el-button style="margin-left: 10px;" size="small" type="success" @click="jarUploadDialogVisible = true">上传依赖Jar</el-button>
-      </el-col>
-
-      <el-col :span="2"> 
-        <el-button style="margin-left: 10px;" size="small" type="success" @click="jarDownloadDialogVisible = true">从仓库下载依赖Jar</el-button>
-      </el-col>
-    </el-row>
-
-    <el-row>
-      <el-col :span="4"> 
-        <el-select v-model="selectVersion" placeholder="请选择要执行的版本" @change='changeVersion'>
-            <el-option v-for="item in versions" :key="item" :label="item" :value="item" >
-            </el-option>
-          </el-select>
-      </el-col>
-      <el-col :span="4"> 
-        <el-select v-model="selectMethod" placeholder="请选择要执行的方法">
-            <el-option v-for="item in javaMethods" :key="item" :label="item" :value="item" >
-            </el-option>
-          </el-select>
-      </el-col>
-
-      <el-col :span="2"> 
-          <el-button style="margin-left: 10px;" size="small" type="success" @click="invokeMethod">执行函数</el-button>
+      <el-col :span="1">
+        <el-button size="small" type="success" @click="executeMethod">执行函数</el-button>
       </el-col>
     </el-row>
       
@@ -190,7 +204,7 @@
 </template>
 
 <script>
-import { httpParamPost, httpDataPost } from "@/api/http_util";
+import {httpDataPost, httpParamPost} from "@/api/http_util";
 
 export default {
   
@@ -200,11 +214,13 @@ export default {
       jarDownloadDialogVisible: false,
       sourceTypes: ['编辑Java源码', '上传Java文件', '上传Class文件'],
       selectedSourceType: '编辑Java源码',
-      javaMethods: [],
+      classInfoList: [],
+      classes: [],
       versions: [],
-      selectMethod: null,
+      javaMethods: [],
+      selectClass: null,
       selectVersion: null,
-      className: "",
+      selectMethod: null,
       data: {
         table: "",
         skipFields: ""
@@ -217,16 +233,19 @@ export default {
       jarList: []
     };
   },
+  mounted() {
+    this.queryClassInfo();
+  },
   methods: {
-     submitUpload() {
+    submitUpload() {
       this.result = ""
       this.javacontent = ""
-      
-      if(this.selectedSourceType == '上传Java文件' ||
+
+      if (this.selectedSourceType == '上传Java文件' ||
           this.selectedSourceType == '上传Class文件') {
-          this.$refs.upload.submit();
-       } else {
-          httpDataPost(this.javasource, '/jrc/uploadJavaSource').then(response=> {
+        this.$refs.upload.submit();
+      } else {
+        httpDataPost(this.javasource, '/jrc/uploadJavaSource').then(response => {
             
             this.$notify({
               title: '执行完成',
@@ -234,13 +253,6 @@ export default {
               message: "",
               duration: 5000
             });
-            
-            this.versions = response.data.versions;
-            this.className = response.data.className;
-
-            if(this.versions.length > 0) {
-              this.selectVersion = this.versions[0]
-            }
 
             this.queryClassInfo()
             this.decompile()
@@ -250,34 +262,82 @@ export default {
        }
         
       },
-      changeVersion() {
-        this.queryClassInfo()
-        this.decompile()
-      },
       queryClassInfo() {
-        let query =  {
-            className : this.className,
-            version : this.selectVersion
-        }
-        httpParamPost(query, '/jrc/classInfo').then(response=> {
-          this.javaMethods = response.data.methodNames;
-          if(this.javaMethods.length > 0) {
-            this.selectMethod = this.javaMethods[0]
+        let query = {}
+        httpParamPost(query, '/jrc/getClassVersionMethods').then(response => {
+          this.classInfoList = response.data;
+          console.info("getClassVersionMethods -> ", this.classInfoList)
+          if (this.classInfoList.length > 0) {
+            const firstClassInfo = this.classInfoList[0]
+            this.selectClass = firstClassInfo.className
+            this.selectVersion = firstClassInfo.versions[0].version
+            this.selectMethod = firstClassInfo.versions[0].methodNames[0]
+
+            console.info("selectClass ->", this.selectClass)
+            console.info("selectVersion ->", this.selectVersion)
+            console.info("selectMethod ->", this.selectMethod)
+
+            this.changeReset()
+
           }
         }).catch(err => {
-            this.$message.error("/jrc/classInfo request error  " + err)
+          this.$message.error("/jrc/getClassVersionMethods request error  " + err)
         })
       },
-      decompile() {
-        let query =  {
-            className : this.className,
-            version : this.selectVersion
-        }
-        httpParamPost(query, '/jrc/decompile').then(response=> {
-          this.javacontent = response.data.source;
-        }).catch(err => {
-            this.$message.error("/jrc/decompile request error  " + err)
+    changeReset() {
+      this.classes = this.classInfoList.map(function (value) {
+        return value.className
+      })
+      console.info("classes ->", this.classes)
+
+      const selectedClassName = this.selectClass
+      var classInfo = this.classInfoList.filter(function (ci) {
+        return ci.className == selectedClassName
+      })
+      console.info("classInfo ->", classInfo)
+
+      if (classInfo && classInfo.length > 0) {
+        this.versions = classInfo[0].versions.map(function (versionInfo) {
+          return versionInfo.version
         })
+        console.info("versions ->", this.versions)
+      } else {
+        return
+      }
+
+      const selectedVersion = this.selectVersion
+      var versionInfo = classInfo[0].versions.filter(function (versionInfo) {
+        return versionInfo.version == selectedVersion
+      })
+      console.info("versionInfo ->", versionInfo)
+
+      if (versionInfo && versionInfo.length > 0) {
+        this.javaMethods = versionInfo[0].methodNames
+        console.info("methods ->", this.javaMethods)
+      }
+    },
+    changeClass() {
+      this.changeReset()
+      this.decompile()
+    },
+    changeVersion() {
+      this.changeReset()
+      this.decompile()
+    },
+    decompile() {
+      if (!this.selectClass) {
+        return
+      }
+      let query = {
+        className: this.selectClass,
+        version: this.selectVersion
+      }
+      console.info("decompile -> ", query)
+      httpParamPost(query, '/jrc/decompile').then(response => {
+        this.javacontent = response.data.source;
+      }).catch(err => {
+        this.$message.error("/jrc/decompile request error  " + err)
+      })
       },
       handleRemove(file, fileList) {
         console.log(file, fileList);
@@ -294,7 +354,6 @@ export default {
             });
             
             this.versions = response.data.versions;
-            this.className = response.data.className;
 
             if(this.versions.length > 0) {
               this.selectVersion = this.versions[0]
@@ -303,17 +362,17 @@ export default {
             this.queryClassInfo()
             this.decompile()
       },
-      invokeMethod() {
-         let query =  {
-            method : this.selectMethod,
-            className: this.className,
-            version: this.selectVersion
-          }
-          httpParamPost(query, '/jrc/executeMethod').then(res=> {
-            
-            this.$notify({
-              title: '执行完成',
-              type: 'success',
+    executeMethod() {
+      let query = {
+        method: this.selectMethod,
+        className: this.selectClass,
+        version: this.selectVersion
+      }
+      httpParamPost(query, '/jrc/executeMethod').then(res => {
+
+        this.$notify({
+          title: '执行完成',
+          type: 'success',
               message: "方法: " + this.selectMethod,
               duration: 5000
             });

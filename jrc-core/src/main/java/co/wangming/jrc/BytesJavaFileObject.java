@@ -15,6 +15,7 @@ public class BytesJavaFileObject extends SimpleJavaFileObject {
      * 定义一个输出流，用于装载JavaCompiler编译后的Class文件
      */
     private final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    private final String className;
 
     /**
      * 调用父类构造器
@@ -24,6 +25,11 @@ public class BytesJavaFileObject extends SimpleJavaFileObject {
      */
     public BytesJavaFileObject(String name, Kind kind) {
         super(URI.create("string:///" + name.replace('.', '/') + kind.extension), kind);
+        this.className = name;
+    }
+
+    public String getClassName() {
+        return className;
     }
 
     /**

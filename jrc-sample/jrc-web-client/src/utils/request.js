@@ -1,6 +1,5 @@
 import axios from 'axios'
-import { Message, MessageBox } from 'element-ui'
-import store from '../store'
+import {Message} from 'element-ui'
 // import _this from '../../main.js'
 
 // import { getToken } from '@/utils/auth'
@@ -11,7 +10,7 @@ const service = axios.create({
 })
 
 if (process.env.NODE_ENV === 'development') {
-  service.defaults.baseURL = 'http://localhost:8070/'
+  service.defaults.baseURL = 'http://localhost:8080/'
   service.defaults.withCredentials = true
 }
 
