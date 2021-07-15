@@ -1,5 +1,6 @@
 package co.wangming.jrc.jrcwebserver;
 
+import co.wangming.jrc.JrcExecutor;
 import co.wangming.jrc.JrcResult;
 import co.wangming.jrc.MavenUtil;
 import com.alibaba.fastjson.JSON;
@@ -25,7 +26,7 @@ public class JrcController {
 	public JrcResult uploadClassFile(@RequestParam("file") MultipartFile file) {
         try {
             byte[] bytes = IOUtils.toByteArray(file.getInputStream());
-            return JrcContext.INSTANCE.cacheClassFile(bytes);
+            return JrcExecutor.INSTANCE.cacheClassFile(bytes);
         } catch (Exception e) {
             logger.error("decompile error", e);
             return JrcResult.error(e.getMessage());
@@ -36,7 +37,7 @@ public class JrcController {
 	public JrcResult uploadJavaFile(@RequestParam("file") MultipartFile file) {
         try {
             String javasource = IOUtils.toString(file.getInputStream(), "UTF8");
-            return JrcContext.INSTANCE.compile(javasource);
+            return JrcExecutor.INSTANCE.compile(javasource);
         } catch (Exception e) {
             logger.error("compileFile error", e);
             return JrcResult.error(e.getMessage());
@@ -46,7 +47,7 @@ public class JrcController {
 	@PostMapping(value = "/uploadJavaSource")
     public JrcResult uploadJavaSource(@RequestBody String javasource) {
         try {
-            return JrcContext.INSTANCE.compile(javasource);
+            return JrcExecutor.INSTANCE.compile(javasource);
         } catch (Exception e) {
             logger.error("compileSource error", e);
             return JrcResult.error(e.getMessage());
@@ -59,7 +60,7 @@ public class JrcController {
         try {
             byte[] bytes = IOUtils.toByteArray(file.getInputStream());
             logger.info("appendClassPath");
-            return JrcContext.INSTANCE.appendClassPath(bytes);
+            return JrcExecutor.INSTANCE.appendClassPath(bytes);
         } catch (IOException e) {
             logger.error("appendClassPath error", e);
             return JrcResult.error(e.getMessage());
@@ -70,7 +71,7 @@ public class JrcController {
     @PostMapping(value = "/getClassVersionMethods")
     public JrcResult getClassVersionMethods() {
         try {
-            return JrcContext.INSTANCE.getClassVersionMethods();
+            return JrcResult.success(JrcExecutor.INSTANCE.getClassVersionMethods());
         } catch (Exception e) {
             logger.error("exec error", e);
             return JrcResult.error(e.getMessage());
@@ -80,7 +81,7 @@ public class JrcController {
     @PostMapping(value = "/decompile")
     public JrcResult decompile(@RequestParam("className") String className, @RequestParam("version") String version) {
         try {
-            return JrcContext.INSTANCE.decompile(className, version);
+            return JrcExecutor.INSTANCE.decompile(className, version);
         } catch (Exception e) {
             logger.error("exec error", e);
             return JrcResult.error(e.getMessage());
@@ -93,7 +94,7 @@ public class JrcController {
                                    @RequestParam("method") String method) {
         logger.info("execute {} - {} - {}", className, version, method);
         try {
-            return JrcContext.INSTANCE.exec(className, version, method);
+            return JrcExecutor.INSTANCE.exec(className, version, method);
         } catch (Exception e) {
             logger.error("exec error", e);
             return JrcResult.error(e.getMessage());

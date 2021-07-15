@@ -1,7 +1,7 @@
 package co.wangming.jrc;
 
 
-import co.wangming.jrc.classloader.ClassLoaderUtil;
+import co.wangming.jrc.classloader.ClassLoaderFactory;
 import co.wangming.jrc.classloader.JrcClassLoader;
 import co.wangming.jrc.manager.JavaFileManagerFactory;
 import co.wangming.jrc.manager.JrcJavaFileManager;
@@ -30,17 +30,18 @@ import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 /**
  * Created By WangMing On 2019/1/17
  **/
-public class JrcExecutor {
+public enum JrcExecutor {
+
+    INSTANCE;
 
     private static final Logger logger = LoggerFactory.getLogger(JrcExecutor.class);
 
-    private final Map<String, Map<String, ClassWrapper>> classBytesCache = new ConcurrentHashMap<>();
+    private final Map<String, Map<String, ClassWrapper>> classBytesCache = new HashMap<>();
 
     private static final List<String> skip = new ArrayList() {{
         for (Method method : Object.class.getMethods()) {
@@ -53,6 +54,10 @@ public class JrcExecutor {
     private static class ClassWrapper {
         byte[] classBytes;
         Class targetClass;
+    }
+
+    private synchronized Map<String, Map<String, ClassWrapper>> getClassBytesCache() {
+        return new HashMap<>(classBytesCache);
     }
 
     /***************************************************************************************************
@@ -86,8 +91,6 @@ public class JrcExecutor {
 
             appendClassPath(libFile.getCanonicalPath());
             addRuntimeClassPath(libFile.getCanonicalPath());
-
-            ClassLoaderUtil.setClassLoader(null);
 
             return JrcResult.success(getAllCallpath());
         } catch (Exception e) {
@@ -164,7 +167,7 @@ public class JrcExecutor {
 
     }
 
-    private Map<String, ClassWrapper> cacheClass(String className, byte[] classBytes, String type) {
+    private synchronized Map<String, ClassWrapper> cacheClass(String className, byte[] classBytes, String type) {
 
         if (classBytes == null || classBytes.length == 0) {
             return null;
@@ -178,7 +181,7 @@ public class JrcExecutor {
             return null;
         }
 
-        JrcClassLoader defineClassLoader = ClassLoaderUtil.getClassLoader();
+        JrcClassLoader defineClassLoader = ClassLoaderFactory.getClassLoader();
 
         Class<?> clazz = defineClassLoader.defineClass(className, classBytes);
         if (clazz == null) {
@@ -204,7 +207,7 @@ public class JrcExecutor {
     }
 
     private ClassWrapper getClassByNameAndVersion(String className, String version) {
-        Map<String, ClassWrapper> cache = classBytesCache.get(className);
+        Map<String, ClassWrapper> cache = getClassBytesCache().get(className);
         if (cache == null) {
             return null;
         }
@@ -292,7 +295,7 @@ public class JrcExecutor {
     public List<ClassInfo> getClassVersionMethods() {
 
         List<ClassInfo> result = new ArrayList<>();
-        for (Map.Entry<String, Map<String, ClassWrapper>> stringMapEntry : classBytesCache.entrySet()) {
+        for (Map.Entry<String, Map<String, ClassWrapper>> stringMapEntry : getClassBytesCache().entrySet()) {
 
             ClassInfo classInfo = new ClassInfo();
             classInfo.className = stringMapEntry.getKey();

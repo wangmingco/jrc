@@ -1,6 +1,6 @@
 package co.wangming.jrc.manager.springboot;
 
-import co.wangming.jrc.classloader.ClassLoaderUtil;
+import co.wangming.jrc.classloader.ClassLoaderFactory;
 import co.wangming.jrc.manager.JrcJavaFileManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +31,7 @@ public class SpringBootJavaFileManager extends JrcJavaFileManager {
 
     @Override
     public ClassLoader getClassLoader(Location location) {
-        return ClassLoaderUtil.getClassLoader();
+        return ClassLoaderFactory.getClassLoader();
     }
 
     @Override

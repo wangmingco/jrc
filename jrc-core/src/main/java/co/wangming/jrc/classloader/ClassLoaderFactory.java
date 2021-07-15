@@ -9,46 +9,34 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 
-public class ClassLoaderUtil {
+public class ClassLoaderFactory {
 
-    private static final Logger logger = LoggerFactory.getLogger(ClassLoaderUtil.class);
-
-    private static JrcClassLoader classLoader = null;
-
-    static {
-        setClassLoader(null);
-    }
+    private static final Logger logger = LoggerFactory.getLogger(ClassLoaderFactory.class);
 
     public static JrcClassLoader getClassLoader() {
-        return classLoader;
-    }
-
-    public static void setClassLoader(ClassLoader currentClassLoader) {
         URL[] urls = getLibUrls();
         URLClassLoader urlClassLoader = new URLClassLoader(urls);
         JrcURLClassLoader jrcURLClassLoader = new JrcURLClassLoader(urlClassLoader);
 
         try {
+            /**
+             * 测试是否在springboot环境中，如果是的话，则使用SpringBootLauncher开始spring-loader构建ClassLoader
+             */
             Class.forName("org.springframework.boot.SpringApplication");
-
-            if (currentClassLoader == null && classLoader == null) {
-                new SpringBootLauncher().launch();
-                logger.info("当前classloader为空，处于springboot环境中，开启SpringBootLauncher扫描。新的：{}", classLoader);
-                currentClassLoader = Thread.currentThread().getContextClassLoader();
-                classLoader = new JrcLaunchedURLClassLoader(currentClassLoader, jrcURLClassLoader);
-
-            } else if (classLoader != null) {
-                classLoader.setURLClassLoader(jrcURLClassLoader);
-            } else {
-
-            }
-
+            new SpringBootLauncher().launch();
+            /**
+             * {@link SpringBootLauncher#launch(String[], String, ClassLoader)} 将ClassLoader设置到 Thread的contextClassLoader 上
+             */
+            ClassLoader currentClassLoader = Thread.currentThread().getContextClassLoader();
+            JrcLaunchedURLClassLoader classloader = new JrcLaunchedURLClassLoader(currentClassLoader, jrcURLClassLoader);
+            logger.info("处于springboot环境中，开启SpringBootLauncher扫描: {}", classloader);
+            return classloader;
         } catch (Exception e) {
-            classLoader = jrcURLClassLoader;
+            logger.info("处于非springboot环境中，直接返回 JrcURLClassLoader: {}", jrcURLClassLoader);
+            return jrcURLClassLoader;
         } finally {
-            logger.info("class loader 设置完成：{}", classLoader);
-        }
 
+        }
     }
 
     private static URL[] getLibUrls() {
